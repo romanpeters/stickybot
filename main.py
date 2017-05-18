@@ -34,7 +34,7 @@ def chat(msg):
                 switch_case[command[0]](msg, command[1])
 
 
-def start(msg, add):
+def start(msg):
     """Welke opdrachten zijn er?"""
     chat_id = msg['chat']['id']
     unique_values = []
@@ -44,9 +44,10 @@ def start(msg, add):
             if value is not 'start':
                 unique_values.append(switch_case[value])
                 commands.append("/{0} - {1}".format(value, switch_case[value].__doc__))
-    bot.sendMessage(chat_id, 'Mogelijke opdrachten:\n{}'.format('\n'.join(sorted(commands))))
+    bot.sendMessage(chat_id, "Mogelijke opdrachten:\n{0}".format('\n'.join(sorted(commands))))
 
-def agenda(msg, add):
+
+def agenda(msg):
     """Wanneer is de volgende activiteit?"""
     chat_id = msg['chat']['id']
     req = urlopen('https://koala.svsticky.nl/api/activities/')
@@ -60,13 +61,13 @@ def agenda(msg, add):
     name = event.get('name')
     start = date_to_string(event)
 
-    if event.get('poster') == None:
-        bot.sendMessage(chat_id, '{0}\n{1}'.format(name, start))
+    if event.get('poster') is None:
+        bot.sendMessage(chat_id, f'{name}\n{start}')
     else:
-        bot.sendPhoto(chat_id, event.get('poster'), '{0}\n{1}'.format(name, start))
+        bot.sendPhoto(chat_id, event.get('poster'), f'{name}\n{start}')
 
 
-def bier(msg, add):
+def bier(msg):
     """Kan ik al bier kopen?"""
     chat_id = msg['chat']['id']
     now = datetime.datetime.now()
@@ -78,13 +79,13 @@ def bier(msg, add):
         if now.replace(second=0, microsecond=0) == biertijd:
             response = "TIJD VOOR BIER!"
         else:
-            response = "Het is {0} minuten over bier".format((((now - biertijd).seconds // 60)))
+            response = f"Het is {(now - biertijd).seconds // 60} minuten over bier"
     else:
-        response = "Het is {0} minuten voor bier".format((((biertijd - now).seconds // 60) + 1))
+        response = f"Het is {((biertijd - now).seconds // 60) + 1} minuten voor bier"
     bot.sendMessage(chat_id, response)
 
 
-def minecraft(msg, add):
+def minecraft(msg):
     """Wie zitten er op minecraft?"""
     chat_id = msg['chat']['id']
     server = MinecraftServer.lookup("mc.stickyplay.nl")
@@ -99,18 +100,18 @@ def minecraft(msg, add):
         bot.sendMessage(chat_id, "Er is 1 player online op de Sticky Minecraft server")
     else:
         bot.sendMessage(chat_id,
-                        "Er zijn {0} players online op de Sticky Minecraft server".format(status.players.online))
+                        f"Er zijn {status.players.online} players online op de Sticky Minecraft server")
 
     try:
         query = server.query()  # 'query' has to be enabled in a servers' server.properties file.
-        bot.sendMessage(chat_id, "De volgende players zijn online {0}".format(", ".join(query.players.names)))
-    except:
+        bot.sendMessage(chat_id, "De volgende players zijn online {0}".format(', '.join(query.players.names)))
+    except:  # Too broad
         if status.players.online > 0:
             bot.sendMessage(chat_id,
                             "Als Robin nou eens 'query' enabled in server.properties, dan zou je nu ook kunnen zien wie er online zijn")
 
 
-def stickers(msg, add):
+def stickers(msg):
     """Mag ik een sticker?"""
     chat_id = msg['chat']['id']
     text = 'Sticker packs:'
@@ -143,16 +144,16 @@ def command_parser(input):
 def date_to_string(event):
     """Pakt de datetime van een event en maakt er een mooie zin van"""
     if len(event.get('start_date')) == 25:
-        start = datetime.datetime.strptime(event.get('start_date')[:-6], "%Y-%m-%dT%H:%M:%S")
+        start_time = datetime.datetime.strptime(event.get('start_date')[:-6], "%Y-%m-%dT%H:%M:%S")
     elif len(event.get('start_date')) == 10:
-        start = datetime.datetime.strptime(event.get('start_date')[:10], "%Y-%m-%d")
+        start_time = datetime.datetime.strptime(event.get('start_date')[:10], "%Y-%m-%d")
     else:
-        start = ''
-    if start != '':
-        start = utc.localize(start)
-        start = start.strftime('%A %-d %B %H:%M uur')
-        start = start[0].upper() + start[1:]
-    return start
+        start_time = ''
+    if start_time != '':
+        start_time = utc.localize(start_time)
+        start_time = start_time.strftime('%A %-d %B %H:%M uur')
+        start_time = start_time[0].upper() + start_time[1:]
+    return start_time
 
 
 switch_case = {'start': start,
@@ -183,7 +184,7 @@ def inline_query(msg):
                                                 title=event.get('name'),
                                                 photo_url=event.get('poster'),
                                                 thumb_url=event.get('poster'),
-                                                caption='{0}\n{1}'.format(name, start))
+                                                caption=f'{name}\n{start}')
                 query = msg['query']
                 if query.lower() in event.get('name').lower() or query is '':
                     inline_result.append(result)
