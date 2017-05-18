@@ -184,7 +184,7 @@ def inline_query(msg):
                                                 title=event.get('name'),
                                                 photo_url=event.get('poster'),
                                                 thumb_url=event.get('poster'),
-                                                caption=f'{name}\n{start}')
+                                                caption=f'{name} ({event.get("participant_counter")})\n{start}')
                 query = msg['query']
                 if query.lower() in event.get('name').lower() or query is '':
                     inline_result.append(result)
