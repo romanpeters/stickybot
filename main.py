@@ -31,7 +31,7 @@ def chat(msg):
         if msg['text'][0] == '/':
             command = command_parser(msg['text'])
             if command:
-                switch_case[command[0]](msg, command[1])
+                switch_case[command[0]](msg)
 
 
 def start(msg):
@@ -62,9 +62,9 @@ def agenda(msg):
     start = date_to_string(event)
 
     if event.get('poster') is None:
-        bot.sendMessage(chat_id, f'{name}\n{start}')
+        bot.sendMessage(chat_id, f'{name} ({event.get("participant_counter")})\n{start}')
     else:
-        bot.sendPhoto(chat_id, event.get('poster'), f'{name}\n{start}')
+        bot.sendPhoto(chat_id, event.get('poster'), f'{name} ({event.get("participant_counter")})\n{start}')
 
 
 def bier(msg):
