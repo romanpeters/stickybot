@@ -59,12 +59,14 @@ def agenda(msg):
         event = api[n + 1]
 
     name = event.get('name')
+    location = event.get('location')
+    participants = event.get('participant_counter')
     start = date_to_string(event)
 
     if event.get('poster') is None:
-        bot.sendMessage(chat_id, f'{name} ({event.get("participant_counter")})\n{start}')
+        bot.sendMessage(chat_id, f'{name} ({participants})\n{start}\nLocatie: {location}')
     else:
-        bot.sendPhoto(chat_id, event.get('poster'), f'{name} ({event.get("participant_counter")})\n{start}')
+        bot.sendPhoto(chat_id, event.get('poster'), f'{name} ({participants})\n{start}\nLocatie: {location}')
 
 
 def bier(msg):
