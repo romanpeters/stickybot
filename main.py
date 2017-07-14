@@ -69,6 +69,17 @@ def agenda(msg):
         bot.sendPhoto(chat_id, event.get('poster'), f'{name} ({participants})\n{start}\nLocatie: {location}')
 
 
+def get_event_id_from_poster_url(poster_url) -> int:
+    """Include the id in the API already"""
+    fuck = poster_url[poster_url.index('/activities/')+12:]
+    this = fuck[fuck.index('/'):]
+    return int(fuck.replace(this, ""))
+
+
+
+
+
+
 def bier(msg):
     """Kan ik al bier kopen?"""
     chat_id = msg['chat']['id']
