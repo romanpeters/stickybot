@@ -7,7 +7,7 @@ import json
 import socket
 import telepot
 from telepot.namedtuple import InlineKeyboardMarkup, InlineQueryResultPhoto
-from mcstatus import MinecraftServer
+# from mcstatus import MinecraftServer
 
 from secret import API_KEY
 
@@ -98,7 +98,7 @@ def bier(msg):
     bot.sendMessage(chat_id, response)
 
 
-def minecraft(msg):
+def minecraft(msg):  # deprecated
     """Wie zitten er op minecraft?"""
     chat_id = msg['chat']['id']
     server = MinecraftServer.lookup("mc.stickyplay.nl")
@@ -118,7 +118,7 @@ def minecraft(msg):
     try:
         query = server.query()  # 'query' has to be enabled in a servers' server.properties file.
         bot.sendMessage(chat_id, "De volgende players zijn online {0}".format(', '.join(query.players.names)))
-    except:  # Too broad
+    except:  # TODO too broad
         if status.players.online > 0:
             bot.sendMessage(chat_id,
                             "Als Robin nou eens 'query' enabled in server.properties, dan zou je nu ook kunnen zien wie er online zijn")
@@ -170,8 +170,8 @@ def date_to_string(event):
 
 
 switch_case = {'start': start,
-               'minecraft': minecraft,
-               'mc': minecraft,
+#               'minecraft': minecraft,  # deprecated
+#               'mc': minecraft,         # deprecated
                'agenda': agenda,
                'activiteit': agenda,
                'activiteiten': agenda,
