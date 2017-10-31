@@ -9,7 +9,6 @@ import socket
 import telepot
 from pprint import pprint
 from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton, InlineQueryResultPhoto
-# from mcstatus import MinecraftServer
 
 from secret import API_KEY, KOALA_COOKIE
 
@@ -126,33 +125,6 @@ def bier(msg):
         response = f"Het is {((biertijd - now).seconds // 60) + 1} minuten voor bier"
     bot.sendMessage(chat_id, response)
 
-
-def minecraft(msg):  # deprecated
-    """Wie zitten er op minecraft?"""
-    chat_id = msg['chat']['id']
-    server = MinecraftServer.lookup("mc.stickyplay.nl")
-    try:
-        status = server.status()
-    except socket.timeout:
-        bot.sendMessage(chat_id, "Kan mc.stickyplay.nl niet bereiken :(")
-        return
-    if status.players.online == 0:
-        bot.sendMessage(chat_id, "Er is niemand online op de Sticky Minecraft server")
-    elif status.players.online == 1:
-        bot.sendMessage(chat_id, "Er is 1 player online op de Sticky Minecraft server")
-    else:
-        bot.sendMessage(chat_id,
-                        f"Er zijn {status.players.online} players online op de Sticky Minecraft server")
-
-    try:
-        query = server.query()  # 'query' has to be enabled in a servers' server.properties file.
-        bot.sendMessage(chat_id, "De volgende players zijn online {0}".format(', '.join(query.players.names)))
-    except:  # TODO too broad
-        if status.players.online > 0:
-            bot.sendMessage(chat_id,
-                            "Als Robin nou eens 'query' enabled in server.properties, dan zou je nu ook kunnen zien wie er online zijn")
-
-
 def stickers(msg):
     """Mag ik een sticker?"""
     chat_id = msg['chat']['id']
@@ -204,8 +176,6 @@ def date_to_string(event: dict) -> str:
 
 
 switch_case = {'start': start,
-#               'minecraft': minecraft,  # deprecated
-#               'mc': minecraft,         # deprecated
                'agenda': agenda,
                'activiteiten': agenda,
                'stickers': stickers,
