@@ -170,21 +170,9 @@ def foodtruck(msg):
     message_list = msg['text'].split()
     with open('.foodtruck.json', 'r') as f:
         ft_data = json.load(f)
-    # if len(message_list) > 1:
-    #     if message_list[1] == 'rm':
-    #         ft_data[dag] = None
-    #     else:
-    #         ft_data[dag] = ' '.join(msg['text'].split()[1:])
-    #     with open('.foodtruck.json', 'w') as f:
-    #         json.dump(ft_data, f)
-    #     bot.sendMessage(chat_id, "Aanpassing opgeslagen")
-    #     return
 
     if not ft_data[dag]:
         bot.sendMessage(chat_id, "Vandaag staat er geen foodtruck")
-        # bot.sendMessage(chat_id, "Het is mij nog niet bekend welke foodtruck er vandaag staat. "
-        #                 "Voeg een foodtruck toe door `/foodtruck` te sturen gevolgd door de naam van de foodtruck",
-        #                 parse_mode="Markdown")
     else:
         bot.sendVenue(chat_id, 52.087285, 5.168533, ft_data[dag], dag.title())
 
