@@ -1,15 +1,17 @@
 import time
 import datetime
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
+from urllib.error import HTTPError
 import pytz
 import locale
 import json
 import socket
 import telepot
-from telepot.namedtuple import InlineKeyboardMarkup, InlineQueryResultPhoto
+from pprint import pprint
+from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton, InlineQueryResultPhoto
 # from mcstatus import MinecraftServer
 
-from secret import API_KEY
+from secret import API_KEY, KOALA_COOKIE
 
 BOTNAME = '@stickyutrechtbot'
 utc = pytz.timezone('CET')
@@ -24,14 +26,15 @@ except locale.Error:
 
 def chat(msg):
     """on chat message"""
-    time.sleep(0.5)
+    time.sleep(0.1)  # only necessary if reply from bot appears before command
     content_type, chat_type, chat_id = telepot.glance(msg)
+    pprint(msg)
     if content_type == 'text':
         print(msg['chat']['id'], msg['text'])
         if msg['text'][0] == '/':
             command = command_parser(msg['text'])
             if command:
-                switch_case[command[0]](msg)
+                switch_case[command](msg)
 
 
 def start(msg):
@@ -43,7 +46,7 @@ def start(msg):
         if switch_case[value] not in unique_values:
             if value is not 'start':
                 unique_values.append(switch_case[value])
-                commands.append("/{0} - {1}".format(value, switch_case[value].__doc__))
+                commands.append(f"/{value} - {switch_case[value].__doc__}")
     bot.sendMessage(chat_id, "Mogelijke opdrachten:\n{0}".format('\n'.join(sorted(commands))))
 
 
@@ -66,16 +69,42 @@ def agenda(msg):
     if event.get('poster') is None:
         bot.sendMessage(chat_id, f'{name} ({participants})\n{start}\nLocatie: {location}')
     else:
-        bot.sendPhoto(chat_id, event.get('poster'), f'{name} ({participants})\n{start}\nLocatie: {location}')
+        event_id = get_event_id_from_poster_url(event.get('poster'))
+        button = InlineKeyboardMarkup(inline_keyboard = [[InlineKeyboardButton(text='Meer info', callback_data=f'/activiteit {event_id}')]])
+        bot.sendPhoto(chat_id, event.get('poster'), f'{name} ({participants})\n{start}\nLocatie: {location}', reply_markup=button)
 
 
-def get_event_id_from_poster_url(poster_url) -> int:
+def activiteit(msg):
+    """Vertel meer over deze activiteit"""
+    chat_id = msg['chat']['id']
+    numbers = [int(i) for i in msg['text'].split() if i.isdigit()]
+    for possible_id in numbers:
+        try:
+            build = Request(f'https://koala.svsticky.nl/api/activities/{possible_id}')
+            build.add_header('Cookie', f'remember_user_token={KOALA_COOKIE}')
+            req = urlopen(build)
+        except HTTPError:
+            req = None
+
+        if req:
+            data = req.read().decode('utf-8')
+            event = json.loads(data)
+            event_url = f'https://koala.svsticky.nl/activities/{possible_id}'
+
+            bot.sendMessage(chat_id,
+                            f"{event.get('description')}\n"
+                            f"{event_url}\n"
+                            f"{'_Je kunt je niet meer inschrijven voor deze activiteit._' if event.get('enrollable') == False else ''}",
+                            parse_mode='Markdown',
+                            )
+
+
+
+def get_event_id_from_poster_url(poster_url: str) -> int:
     """Include the id in the API already"""
-    fuck = poster_url[poster_url.index('/activities/')+12:]
-    this = fuck[fuck.index('/'):]
-    return int(fuck.replace(this, ""))
-
-
+    this_is_dumb = poster_url[poster_url.index('/activities/')+12:]
+    yes_it_is = this_is_dumb[this_is_dumb.index('/'):]
+    return int(this_is_dumb.replace(yes_it_is, ""))
 
 
 
@@ -134,27 +163,44 @@ def stickers(msg):
     ])
     bot.sendMessage(chat_id, text, reply_markup=reply_markup)
 
+def foodtruck(msg):
+    """Welke foodtruck staat er vandaag?"""
+    chat_id = msg['chat']['id']
+    dag = utc.localize(datetime.datetime.now()).strftime('%A')
+    message_list = msg['text'].split()
+    with open('.foodtruck.json', 'r') as f:
+        ft_data = json.load(f)
+    # if len(message_list) > 1:
+    #     if message_list[1] == 'rm':
+    #         ft_data[dag] = None
+    #     else:
+    #         ft_data[dag] = ' '.join(msg['text'].split()[1:])
+    #     with open('.foodtruck.json', 'w') as f:
+    #         json.dump(ft_data, f)
+    #     bot.sendMessage(chat_id, "Aanpassing opgeslagen")
+    #     return
 
-def command_parser(input):
-    """static, parses commands"""
-    add_input = None
-    command_input = None
-    if input[0] == '/':  # remove the '/'
-        command_input = input[1:]
-        if ' ' in command_input:  # separate the additive
-            add_input = command_input[command_input.index(' ') + 1:500]
-            command_input = command_input[:command_input.index(' ')]
-        command_input = command_input.lower()  # make lowercase
-        if '@' in command_input:  # check for recipient
-            if command_input[command_input.index('@'):command_input.index('@') + len(BOTNAME)] == BOTNAME:  # remove the recipient
-                command_input = command_input[:command_input.index('@')]
-            else:  # ignore command
-                command_input = None
-                add_input = None
-    return command_input, add_input
+    if not ft_data[dag]:
+        bot.sendMessage(chat_id, "Vandaag staat er geen foodtruck")
+        # bot.sendMessage(chat_id, "Het is mij nog niet bekend welke foodtruck er vandaag staat. "
+        #                 "Voeg een foodtruck toe door `/foodtruck` te sturen gevolgd door de naam van de foodtruck",
+        #                 parse_mode="Markdown")
+    else:
+        bot.sendVenue(chat_id, 52.087285, 5.168533, ft_data[dag], dag.title())
+
+def command_parser(command_input: str) -> str:
+    """Parses commands"""
+    command = command_input.split()[0][1:500].lower()  # limit + make lowercase
+    if '@' in command:
+        i = command.index('@')
+        if command[i:i+len(BOTNAME)] == BOTNAME:
+            command = command[:i]
+        else:  # ignore command
+            command = None
+    return command
 
 
-def date_to_string(event):
+def date_to_string(event: dict) -> str:
     """Pakt de datetime van een event en maakt er een mooie zin van"""
     if len(event.get('start_date')) == 25:
         start_time = datetime.datetime.strptime(event.get('start_date')[:-6], "%Y-%m-%dT%H:%M:%S")
@@ -173,10 +219,11 @@ switch_case = {'start': start,
 #               'minecraft': minecraft,  # deprecated
 #               'mc': minecraft,         # deprecated
                'agenda': agenda,
-               'activiteit': agenda,
                'activiteiten': agenda,
                'stickers': stickers,
                'bier': bier,
+               'activiteit': activiteit,
+               'foodtruck': foodtruck,
                }
 
 
@@ -197,7 +244,9 @@ def inline_query(msg):
                                                 title=event.get('name'),
                                                 photo_url=event.get('poster'),
                                                 thumb_url=event.get('poster'),
-                                                caption=f'{name} ({event.get("participant_counter")})\n{start}')
+                                                caption=f'{name} ({event.get("participant_counter")})\n'
+                                                        f'{start}',
+                                                )
                 query = msg['query']
                 if query.lower() in event.get('name').lower() or query is '':
                     inline_result.append(result)
@@ -206,12 +255,24 @@ def inline_query(msg):
     answerer.answer(msg, compute)
 
 
+def callback_query(callback):
+    """Creates a msg from the callback query data as if it was sent by the user"""
+    query_id, from_id, query_data = telepot.glance(callback, flavor='callback_query')
+    msg = {'chat': {}}
+    msg['chat']['id'] = callback['message']['chat']['id']
+    msg['chat']['type'] = 'text'
+    msg['text'] = query_data
+    chat(msg)
+
+
 if __name__ == '__main__':
     print('Listening...')
     bot = telepot.Bot(API_KEY)
     answerer = telepot.helper.Answerer(bot)
     bot.message_loop({'chat': chat,
                       'inline_query': inline_query,
+                      'callback_query': callback_query,
                       })
     while 1:
         time.sleep(10)
+
