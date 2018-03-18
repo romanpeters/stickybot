@@ -170,7 +170,7 @@ def date_to_string(event: dict) -> str:
         start_time = ''
     if start_time != '':
         start_time = utc.localize(start_time)
-        start_time = start_time.strftime('%A %-d %B %H:%M uur')
+        start_time = start_time.strftime('%A %d %B %H:%M uur')
         start_time = start_time[0].upper() + start_time[1:]
     return start_time
 
