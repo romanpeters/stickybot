@@ -10,7 +10,7 @@ import telepot
 from pprint import pprint
 from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton, InlineQueryResultPhoto
 
-from secret import API_KEY, KOALA_COOKIE
+from redacted import API_KEY, KOALA_COOKIE
 
 BOTNAME = '@stickyutrechtbot'
 utc = pytz.timezone('CET')
