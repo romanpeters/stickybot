@@ -62,7 +62,7 @@ def agenda(msg):
 
     name = event.get('name')
     location = event.get('location')
-    participants = event.get('participant_counter')
+    participants = event.get('participant_counter') if event.get('participant_counter') else 0
     start = date_to_string(event)
 
     if event.get('poster') is None:
@@ -104,7 +104,6 @@ def get_event_id_from_poster_url(poster_url: str) -> int:
     this_is_dumb = poster_url[poster_url.index('/activities/')+12:]
     yes_it_is = this_is_dumb[this_is_dumb.index('/'):]
     return int(this_is_dumb.replace(yes_it_is, ""))
-
 
 
 
