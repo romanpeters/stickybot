@@ -7,6 +7,11 @@ from redacted import BOT_TOKEN, KOALA_COOKIE
 
 logger = logging.getLogger(__name__)
 
+try:
+    locale.setlocale(locale.LC_TIME, "nl_NL.utf8")
+except locale.Error:
+    locale.setlocale(locale.LC_TIME, "nl_NL")
+
 
 def error(update, context):
     """Log Errors caused by Updates."""
@@ -24,9 +29,7 @@ def main():
     dp = updater.dispatcher
 
     # on different commands - answer in Telegram
-    dp.add_handler(CommandHandler("agenda", command.agenda))
-    dp.add_handler(CommandHandler("bier", command.bier))
-    dp.add_handler(CommandHandler("stickers", command.stickers))
+    [dp.add_handler(CommandHandler(value, key)) for value, key in command.commands.items()]
 
     # # on noncommand i.e message - echo the message on Telegram
     # dp.add_handler(MessageHandler(Filters.text, noncommand.echo))

@@ -1,21 +1,17 @@
+import logging
 import datetime
 import json
 from pprint import pprint
 import requests
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-
-tz = datetime.timezone(datetime.timedelta(hours=+1))
-
-import logging
-
 logger = logging.getLogger(__name__)
-
 
 
 def start(update, context):
     """Welke opdrachten zijn er?"""
-
+    text = "\n".join([f"/{value} - {key.__doc__}" for value, key in commands.items()])
+    update.message.reply_text(text)
 
 
 def agenda(update, context):
@@ -53,13 +49,11 @@ def agenda(update, context):
         update.message.reply_text(name, reply_markup=reply_markup)
 
 
-
 def bier(update, context):
     """Kan ik al bier kopen?"""
     nu = datetime.datetime.now()
     biertijd = nu.replace(hour=17, minute=0, second=0, microsecond=0)
     dag = nu.strftime('%A')
-    print(dag)
     if dag in ['zaterdag', 'zondag']:
         response = 'Het is weekend, je zult je bier ergens anders moeten halen'
     elif (nu - biertijd) > datetime.timedelta(hours=0):
@@ -79,7 +73,6 @@ def stickers(update, context):
         [InlineKeyboardButton(text="Meer Sticky stickers", url="https://telegram.me/addstickers/SuperSticky")]
     ])
     update.message.reply_text("Sticker packs:", reply_markup=reply_markup)
-
 
 
 commands = {"start": start,
