@@ -15,7 +15,7 @@ def start(update, context):
 
 
 def agenda(update, context):
-    """Wanneer is de volgende activiteit?"""
+    """Wat is de volgende activiteit?"""
     req = requests.request('get', 'https://koala.svsticky.nl/api/activities/')
     if req.status_code == 200:
         api = json.loads(req.text)
@@ -29,22 +29,18 @@ def agenda(update, context):
         event = api[n + 1]
 
     name = event.get('name')
-    location = event.get('location')
-    participants = event.get('participant_counter') if event.get('participant_counter') else 0
-    start = datetime.datetime.strftime(datetime.datetime.strptime(event.get('start_date')[:-6], "%Y-%m-%dT%H:%M:%S"),
-                                       "%c")
+    participants = f"[{event.get('participant_counter')}]" if event.get('participant_counter') else ""
 
     poster = event.get('poster')
     if not poster:
-        update.message.reply_text(f'{name} ({participants})\n{start}\nLocatie: {location}')
+        location = event.get('location')
+        start = datetime.datetime.strftime(
+            datetime.datetime.strptime(event.get('start_date')[:-6], "%Y-%m-%dT%H:%M:%S"),
+            "%c")
+        update.message.reply_text(f'{name} {participants}\n{start}\nLocatie: {location}')
     else:
-
-        event_id = event.get('id')
-        keyboard = [[InlineKeyboardButton("Meer info", callback_data=f"/activiteit {event_id}")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-
-        context.bot.send_photo(chat_id=update.message.chat_id, photo=poster)
-        update.message.reply_text(name, reply_markup=reply_markup)
+        context.bot.send_photo(chat_id=update.message.chat_id, photo=poster,
+                               caption=f"{name} {participants}\nhttps://koala.svsticky.nl/activities/{event.get('id')}")
 
 
 def bier(update, context):
