@@ -3,7 +3,8 @@ import datetime
 import json
 from pprint import pprint
 import requests
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultPhoto
+
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +23,6 @@ def agenda(update, context):
     else:
         update.message.reply_text("Ik kan Koala niet bereiken :(")
         return
-
-    pprint(api)
 
     n = 0
     event = api[n]
@@ -79,3 +78,29 @@ commands = {"start": start,
             "agenda": agenda,
             "bier": bier,
             "stickers": stickers}
+
+
+def inlinequery(update, context):
+    """Handle the inline query."""
+    req = requests.request('get', 'https://koala.svsticky.nl/api/activities/')
+    if req.status_code == 200:
+        api = json.loads(req.text)
+    else:
+        logger.warning("Couldn't connect to Koala")
+        return
+
+    query = update.inline_query.query
+    inline_results = []
+    for i, event in enumerate(api):
+        if event.get('poster') is not None:
+            result = InlineQueryResultPhoto(
+                id=i,
+                title=event.get('name'),
+                photo_url=event['poster'],
+                thumb_url=event.get('thumbnail'),
+                description=event.get('name')
+            )
+            if query.lower() in event.get('name').lower() or query is '':
+                inline_results.append(result)
+
+    update.inline_query.answer(inline_results)
