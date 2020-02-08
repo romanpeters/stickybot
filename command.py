@@ -1,7 +1,6 @@
 import logging
 import datetime
 import json
-from pprint import pprint
 import requests
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultPhoto
 
@@ -98,7 +97,7 @@ def inlinequery(update, context):
                 title=event.get('name'),
                 photo_url=event['poster'],
                 thumb_url=event.get('thumbnail'),
-                description=event.get('name')
+                description=event.get('name'),
             )
             if query.lower() in event.get('name').lower() or query is '':
                 inline_results.append(result)

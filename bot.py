@@ -1,9 +1,8 @@
 import locale
 import logging
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 import command
-from redacted import BOT_TOKEN, KOALA_COOKIE
+from redacted import BOT_TOKEN
 
 
 from telegram.ext import Updater, InlineQueryHandler, CommandHandler
